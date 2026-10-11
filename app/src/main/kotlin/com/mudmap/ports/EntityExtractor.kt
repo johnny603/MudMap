@@ -1,6 +1,6 @@
 // Pattern: Port
 // Absorbs: The boundary between logging and concrete transcript extraction.
-package com.mudmap.slice1.ports
+package com.mudmap.ports
 
 import com.mudmap.slice1.storage.EntitySet
 

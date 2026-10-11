@@ -7,22 +7,63 @@ exact vocabulary terms, and save the six-field entry in Room. The map reads
 entries on launch and after saves; pins open a transcript-and-tags bottom sheet.
 Entries without coordinates remain saved but cannot have geographic pins.
 
+## Prerequisites
+
+MudMap requires a specific, pinned toolchain. Mismatched versions produce
+non-obvious failures — most notably `What went wrong: 25.0.4.1` from a
+non-17 JDK, and `Install the pmtiles CLI` from a missing map tool. Verify
+each item below before attempting a build.
+
+### System requirements
+
+- **Disk space:** at least **30 GB free** before starting. The Android SDK,
+  NDK, CMake, Gradle dependency cache, and the whisper.cpp JNI build together
+  consume roughly 20–25 GB on first run. Check with `df -h /System/Volumes/Data`.
+  On macOS, `df -h /` reports the read-only system volume and understates
+  available space.
+- **OS:** macOS or Linux. Windows is untested.
+- **Time:** first build takes 10–30 minutes; most of it is the whisper.cpp
+  native compile.
+
+### Pinned versions
+
+| Component | Version |
+|---|---|
+| JDK | 17 |
+| Gradle | 8.11.1 (pinned by wrapper) |
+| Android SDK | 35 |
+| Android Build Tools | 35.0.0 |
+| Android NDK | 27.0.12077973 |
+| CMake | 3.22.1 |
+| AGP | 8.9.2 |
+| Kotlin | 2.1.20 |
+| Room | 2.7.1 |
+| MapLibre | 12.3.1 |
+| Coroutines | 1.10.2 |
+| Location | 21.3.0 |
+| whisper.cpp | v1.9.5 (`d1be6fde11ac6e0407606b4e42fe72d34add8037`) |
+
+### Command-line tools
+
+- `curl` — used by the asset script
+- [`pmtiles` CLI](https://github.com/protomaps/go-pmtiles/releases/latest) —
+  used by the asset script. **Not installed by default.** Verify with
+  `pmtiles --help` (the CLI does not accept `--version`; use the `version`
+  subcommand instead).
+- `ffmpeg` — only needed for the optional Linux host JNI check
+- `git` with submodule support
+
+### JDK 17 specifically
+
+Gradle will fail with the cryptic `25.0.4.1` message if `JAVA_HOME` points
+at any other major version. Confirm before building:
+
+```sh
+java -version        # must report 17.x
+echo $JAVA_HOME
+```
+
 ## Environment setup
-
-MudMap pins a specific toolchain. Mismatched JDKs (anything other than 17)
-produce non-obvious build failures such as `What went wrong: 25.0.4.1`.
-The `prepare-assets.sh` script also requires the `pmtiles` CLI, which is not
-installed by default.
-
-Pinned versions:
-
-- JDK 17
-- Android SDK 35, Build Tools 35.0.0
-- Android NDK 27.0.12077973
-- CMake 3.22.1, Ninja
-- `ffmpeg` (for the optional host JNI check)
-- `pmtiles` CLI (for `scripts/prepare-assets.sh`)
-- `curl`
 
 ### Option A: Dev container (recommended)
 
@@ -34,7 +75,8 @@ devcontainer up --workspace-folder .
 devcontainer exec --workspace-folder . bash
 ```
 
-Everything below then works inside the container with no host setup.
+Everything below then works inside the container with no host setup. This is
+also the easiest path when the host machine has limited disk space.
 
 ### Option B: Local bootstrap (macOS/Linux)
 
@@ -53,15 +95,50 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS
 # or: export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk  # Linux
 ```
 
+### Option C: Manual toolchain setup
+
+If you are installing the Android SDK by hand rather than through Android
+Studio, the command-line tools are sufficient. On macOS:
+
+```sh
+brew install --cask android-commandlinetools
+export ANDROID_HOME=/usr/local/share/android-commandlinetools
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+```
+
+Accept licenses and install the pinned components:
+
+```sh
+sdkmanager --licenses
+sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973" "cmake;3.22.1"
+```
+
+The NDK download alone is roughly 3–4 GB. `sdkmanager` reports
+`No space left on device` if the disk is full; this is a capacity problem,
+not a configuration one.
+
+### Persist the environment
+
+A bootstrap script cannot modify its parent shell. To keep `JAVA_HOME` and
+`ANDROID_HOME` across new terminals, append them to your shell profile:
+
+```sh
+echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 17)' >> ~/.zshrc
+echo 'export ANDROID_HOME=/usr/local/share/android-commandlinetools' >> ~/.zshrc
+echo 'export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
 ### Verify the environment
 
-Run these checks before building; they catch the JDK mismatch that otherwise
-surfaces as `25.0.4.1`:
+Run these before building; they catch the two most common failures early:
 
 ```sh
 java -version        # must report 17.x
-pmtiles --version
+pmtiles --help       # any output means it is on PATH
 echo $JAVA_HOME
+echo $ANDROID_HOME
+df -h /System/Volumes/Data   # confirm ~30 GB free
 ```
 
 ## Build and run
@@ -92,6 +169,15 @@ The asset script requires curl and the
 Use `PMTILES=/absolute/path/to/pmtiles` if it is not on PATH.
 Large model/archive files are intentionally ignored by Git, not downloaded
 by the app. The APK already contains them.
+
+### Common build failures
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `What went wrong: 25.0.4.1` | `JAVA_HOME` is not JDK 17 | Re-export `JAVA_HOME` as shown above |
+| `SDK location not found` | `ANDROID_HOME` unset and no `local.properties` | Set `ANDROID_HOME` or create `local.properties` with `sdk.dir=...` |
+| `Install the pmtiles CLI` | `pmtiles` not on PATH | `brew install pmtiles`, or pass `PMTILES=/absolute/path` |
+| `No space left on device` | Disk full during SDK/NDK install | Free ~30 GB; see Prerequisites |
 
 ## Offline assets and coverage
 

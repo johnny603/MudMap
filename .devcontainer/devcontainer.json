@@ -1,0 +1,9 @@
+{
+  "name": "MudMap",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": { "version": "17" },
+    "ghcr.io/devcontainers/features/android-sdk:1": {}
+  },
+  "postCreateCommand": "bash scripts/bootstrap.sh && git submodule update --init --recursive"
+}

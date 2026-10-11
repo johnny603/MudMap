@@ -1,10 +1,10 @@
 // Pattern: Adapter
 // Absorbs: The trail vocabulary asset format and exact phrase-matching rules.
-package com.mudmap.slice1.extractors
+package com.mudmap.extractors
 
 import android.content.Context
-import com.mudmap.slice1.ports.EntityExtractor
-import com.mudmap.slice1.storage.EntitySet
+import com.mudmap.ports.EntityExtractor
+import com.mudmap.storage.EntitySet
 import java.util.Locale
 
 class RuleBasedExtractor(context: Context) : EntityExtractor {

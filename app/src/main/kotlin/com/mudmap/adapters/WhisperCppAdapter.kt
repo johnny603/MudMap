@@ -1,9 +1,9 @@
 // Pattern: Adapter
 // Absorbs: whisper.cpp library loading, model staging, PCM input, and JNI calls.
-package com.mudmap.slice1.adapters
+package com.mudmap.adapters
 
 import android.content.Context
-import com.mudmap.slice1.ports.Transcriber
+import com.mudmap.ports.Transcriber
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext

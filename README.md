@@ -41,20 +41,20 @@ The vocabulary is plain data; its required 20 lines have no comment header.
 ## Human Intervention Used
 
 - Create or use the Android Studio Empty Activity project with Kotlin,
-  Views, and minSdk 26; use package `com.mudmap.slice1` or adjust packages.
+  Views, and minSdk 26; use package `com.mudmap` or adjust packages.
 - Add compatible Room runtime/compiler, MapLibre Native, Coroutines Android,
   and Play Services Location dependencies yourself; no versions are assumed.
 - Configure Room annotation processing yourself.
 - Copy production Kotlin files into the application's source directory.
 - Keep the supplied test files in this delivery tree, but place them under
-  `app/src/androidTest/kotlin/com/mudmap/slice1/test/` in the actual project.
+  `app/src/androidTest/kotlin/com/mudmap/test/` in the actual project.
   Add AndroidX Test, its runner, and JUnit dependencies and configure the runner.
 - Copy `extractors/trail_words.txt` to `app/src/main/assets/trail_words.txt`;
   the Kotlin source directory is not an Android assets directory.
 - Write the JNI C++ shim and CMakeLists.txt using the whisper.cpp Android
   example. Build `libmudmap_whisper.so` for the device ABI.
 - Implement the instance JNI method for
-  `com.mudmap.slice1.adapters.WhisperCppAdapter.whisperTranscribe`.
+  `com.mudmap.adapters.WhisperCppAdapter.whisperTranscribe`.
   Read the instance's `modelPath` String field, initialize whisper.cpp with
   that model, transcribe the supplied 16 kHz mono floats, and return text.
   Manage native contexts, JNI references, and errors in the human-written shim.

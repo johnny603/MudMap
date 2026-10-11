@@ -1,17 +1,10 @@
 package com.mudmap
-
 import android.Manifest
 import android.app.Activity
-import android.app.Dialog
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.view.Gravity
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import androidx.room.Room
 import com.mudmap.adapters.AudioDecoder
@@ -20,16 +13,15 @@ import com.mudmap.extractors.RuleBasedExtractor
 import com.mudmap.location.LocationProvider
 import com.mudmap.service.LogEntryUseCase
 import com.mudmap.storage.MudMapDatabase
-import com.mudmap.storage.TrailEntry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
 import org.maplibre.android.maps.MapView
-
 class MainActivity : Activity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var database: MudMapDatabase
@@ -42,7 +34,6 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private var recording = false
     private var askedPermissions = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MapLibre.getInstance(this)
@@ -66,8 +57,13 @@ class MainActivity : Activity() {
             addView(status, LinearLayout.LayoutParams(-1, -2))
             addView(button, LinearLayout.LayoutParams(-1, -2))
         }
+        root.setOnApplyWindowInsetsListener { view, insets ->
+            view.setPadding(insets.systemWindowInsetLeft, insets.systemWindowInsetTop,
+                insets.systemWindowInsetRight, insets.systemWindowInsetBottom)
+            insets
+        }
         setContentView(root)
-        map = MapViewController(mapView, ::showEntry)
+        map = MapViewController(mapView) { showEntrySheet(it) }
         button.setOnClickListener { if (recording) stopRecording() else startRecording() }
         scope.launch {
             try { map.reload(database.entryDao().getAll()) }
@@ -100,6 +96,8 @@ class MainActivity : Activity() {
             button.text = "Stop"
             status.text = "Recording"
         } catch (error: Exception) {
+            recorder.release()
+            location.last()
             status.text = "Record failed: ${error.message}"
         }
     }
@@ -128,35 +126,25 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showEntry(entry: TrailEntry) {
-        val content = TextView(this).apply {
-            setTextColor(Color.BLACK)
-            textSize = 18f
-            setPadding(32, 32, 32, 32)
-            text = "${entry.transcript}\n\nSpecies: " +
-                entry.species.joinToString().ifEmpty { "None" } +
-                "\nConditions: " + entry.conditions.joinToString().ifEmpty { "None" }
-        }
-        val sheet = Dialog(this)
-        sheet.setContentView(ScrollView(this).apply { addView(content) })
-        sheet.show()
-        sheet.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.WHITE))
-            setGravity(Gravity.BOTTOM)
-            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        }
-    }
-
     override fun onStart() { super.onStart(); mapView.onStart() }
     override fun onResume() { super.onResume(); mapView.onResume() }
     override fun onPause() { mapView.onPause(); super.onPause() }
-    override fun onStop() { mapView.onStop(); super.onStop() }
+    override fun onStop() {
+        if (recording) {
+            runCatching { recorder.stop() }
+            location.last()
+            recording = false
+            button.text = "Record"
+            status.text = "Recording interrupted; audio not logged. Start again."
+        }
+        mapView.onStop(); super.onStop()
+    }
     override fun onLowMemory() { super.onLowMemory(); mapView.onLowMemory() }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState); mapView.onSaveInstanceState(outState)
     }
     override fun onDestroy() {
-        scope.cancel(); recorder.release(); mapView.onDestroy()
-        database.close(); super.onDestroy()
+        scope.coroutineContext[Job]?.invokeOnCompletion { database.close() }
+        scope.cancel(); recorder.release(); mapView.onDestroy(); super.onDestroy()
     }
 }

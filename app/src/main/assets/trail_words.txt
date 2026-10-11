@@ -1,0 +1,20 @@
+s:heron
+s:blackberry
+s:blackberries
+s:deer
+s:robin
+s:crow
+s:oak
+s:maple
+s:fern
+s:moss
+c:mud
+c:washed out
+c:dry
+c:creek
+c:steep
+c:rocky
+c:shade
+c:sun
+c:wind
+c:fog

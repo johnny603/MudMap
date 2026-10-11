@@ -6,7 +6,7 @@ import android.content.pm.PackageManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.mudmap.slice1.storage.GeoPoint
+import com.mudmap.storage.GeoPoint
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart

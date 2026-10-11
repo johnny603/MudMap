@@ -16,7 +16,7 @@ class WhisperCppAdapter(
 ) : Transcriber {
     private val appContext = context.applicationContext
 
-    // The human-written JNI shim reads this instance field.
+    // The instance JNI shim reads this field.
     @JvmField
     val modelPath: String = File(
         appContext.filesDir,
@@ -25,14 +25,27 @@ class WhisperCppAdapter(
 
     override suspend fun transcribe(audioPath: String): String =
         withContext(Dispatchers.IO) {
-            System.loadLibrary("mudmap_whisper")
+            try {
+                System.loadLibrary("mudmap_whisper")
+            } catch (error: UnsatisfiedLinkError) {
+                throw IllegalStateException("The whisper native library is unavailable.", error)
+            }
             val model = File(modelPath)
-            if (!model.exists()) {
+            val expectedBytes = try {
+                appContext.assets.openFd("ggml-base.en.bin").use { it.length }
+            } catch (error: Exception) {
+                throw IllegalStateException("Run scripts/prepare-assets.sh before building.", error)
+            }
+            require(expectedBytes > 0L) { "The bundled whisper model is empty." }
+            if (model.length() != expectedBytes) {
+                val staging = File("$modelPath.part")
                 appContext.assets.open("ggml-base.en.bin").use { input ->
-                    model.outputStream().use { output -> input.copyTo(output) }
+                    staging.outputStream().use { output -> input.copyTo(output) }
+                }
+                require(staging.length() == expectedBytes && staging.renameTo(model)) {
+                    "Could not stage the whisper model in private storage."
                 }
             }
-            require(model.length() > 0L) { "The whisper model is empty." }
             currentCoroutineContext().ensureActive()
             val samples = decoder.decode(audioPath)
             require(samples.isNotEmpty()) { "The recording contains no PCM." }
@@ -40,6 +53,6 @@ class WhisperCppAdapter(
             whisperTranscribe(samples).trim()
         }
 
-    // Human must implement this instance JNI method and its model loading.
+    // Implemented by app/src/main/cpp/whisper_jni.cpp.
     external fun whisperTranscribe(samples: FloatArray): String
 }

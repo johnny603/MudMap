@@ -1,0 +1,12 @@
+.gradle/
+.kotlin/
+.idea/
+**/build/
+**/.cxx/
+**/.cxx
+local.properties
+*.iml
+app/src/main/assets/ggml-base.en.bin
+app/src/main/assets/ggml-base.en.bin.part
+app/src/main/assets/region.pmtiles
+app/src/main/assets/region.pmtiles.part

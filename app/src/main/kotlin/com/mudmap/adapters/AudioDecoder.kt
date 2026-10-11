@@ -1,6 +1,5 @@
 // Decodes .m4a to 16 kHz mono float PCM for whisper.cpp. Not a pattern.
 package com.mudmap.adapters
-
 import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
@@ -9,7 +8,6 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.ceil
 import kotlin.math.floor
-
 class AudioDecoder {
     fun decode(audioPath: String): FloatArray {
         val extractor = MediaExtractor()
@@ -64,10 +62,8 @@ class AudioDecoder {
                     MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         val output = decoder.outputFormat
                         val nextRate = output.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-                        val nextChannels =
-                            output.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                        require(pcm.size == 0 ||
-                            (rate == nextRate && channels == nextChannels)) {
+                        val nextChannels = output.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                        require(pcm.size == 0 || (rate == nextRate && channels == nextChannels)) {
                             "Audio format changed during decoding."
                         }
                         rate = nextRate
@@ -86,8 +82,7 @@ class AudioDecoder {
                                 buffer.limit(info.offset + info.size)
                                 appendMono(buffer.slice(), channels, encoding, pcm)
                             }
-                            outputEnded =
-                                info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
+                            outputEnded = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
                         } finally {
                             decoder.releaseOutputBuffer(index, false)
                         }
@@ -106,8 +101,7 @@ class AudioDecoder {
             }
         }
     }
-
-    private fun appendMono(
+    internal fun appendMono(
         buffer: ByteBuffer, channels: Int, encoding: Int, target: FloatBuffer
     ) {
         require(channels > 0)
@@ -123,8 +117,7 @@ class AudioDecoder {
             var sum = 0f
             repeat(channels) {
                 val sample = when (encoding) {
-                    AudioFormat.ENCODING_PCM_8BIT ->
-                        ((buffer.get().toInt() and 255) - 128) / 128f
+                    AudioFormat.ENCODING_PCM_8BIT -> ((buffer.get().toInt() and 255) - 128) / 128f
                     AudioFormat.ENCODING_PCM_16BIT -> buffer.short / 32768f
                     else -> buffer.float
                 }
@@ -133,8 +126,7 @@ class AudioDecoder {
             target.add((sum / channels).coerceIn(-1f, 1f))
         }
     }
-
-    private fun resample(input: FloatArray, rate: Int): FloatArray {
+    internal fun resample(input: FloatArray, rate: Int): FloatArray {
         require(rate > 0)
         if (input.isEmpty() || rate == 16_000) return input
         val count = ceil(input.size.toDouble() * 16_000 / rate).toInt()
@@ -146,11 +138,9 @@ class AudioDecoder {
             (input[left] + (input[right] - input[left]) * fraction).coerceIn(-1f, 1f)
         }
     }
-
-    private class FloatBuffer {
+    internal class FloatBuffer {
         private var values = FloatArray(16_000)
-        var size = 0
-            private set
+        var size = 0; private set
         fun add(value: Float) {
             if (size == values.size) values = values.copyOf(values.size * 2)
             values[size++] = value

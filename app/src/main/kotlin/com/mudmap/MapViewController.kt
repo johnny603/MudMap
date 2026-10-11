@@ -67,12 +67,15 @@ private val offlineStyle = """
 {
   "version": 8,
   "name": "MudMap Offline",
+  "center": [-122.44, 37.77],
+  "zoom": 11,
   "glyphs": "file:///android_asset/fonts/{fontstack}/{range}.pbf",
   "sprite": "file:///android_asset/map/sprite",
   "sources": {
     "region": {
       "type": "vector",
-      "url": "pmtiles://file:///android_asset/region.pmtiles"
+      "url": "pmtiles://file:///android_asset/region.pmtiles",
+      "attribution": "© OpenStreetMap contributors"
     }
   },
   "layers": [
@@ -92,7 +95,7 @@ private val offlineStyle = """
       "id": "paths",
       "type": "line",
       "source": "region",
-      "source-layer": "transportation",
+      "source-layer": "roads",
       "paint": { "line-color": "#76684f", "line-width": 1.5 }
     }
   ]

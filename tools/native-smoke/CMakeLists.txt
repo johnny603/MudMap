@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(mudmap_native_smoke LANGUAGES C CXX)
+find_package(JNI REQUIRED COMPONENTS JVM)
+add_subdirectory("../../app/src/main/cpp" "${CMAKE_CURRENT_BINARY_DIR}/native")
+target_include_directories(mudmap_whisper PRIVATE ${JNI_INCLUDE_DIRS})

@@ -1,11 +1,68 @@
 # MudMap
 
-MudMap is a single-phone, offline “walk, talk, map” slice. Press Record to
+MudMap is a single-phone, offline "walk, talk, map" slice. Press Record to
 capture an app-private `.m4a` and request one location fix; press Stop to
 decode AAC into 16 kHz mono float PCM, transcribe with whisper.cpp, extract
 exact vocabulary terms, and save the six-field entry in Room. The map reads
 entries on launch and after saves; pins open a transcript-and-tags bottom sheet.
 Entries without coordinates remain saved but cannot have geographic pins.
+
+## Environment setup
+
+MudMap pins a specific toolchain. Mismatched JDKs (anything other than 17)
+produce non-obvious build failures such as `What went wrong: 25.0.4.1`.
+The `prepare-assets.sh` script also requires the `pmtiles` CLI, which is not
+installed by default.
+
+Pinned versions:
+
+- JDK 17
+- Android SDK 35, Build Tools 35.0.0
+- Android NDK 27.0.12077973
+- CMake 3.22.1, Ninja
+- `ffmpeg` (for the optional host JNI check)
+- `pmtiles` CLI (for `scripts/prepare-assets.sh`)
+- `curl`
+
+### Option A: Dev container (recommended)
+
+The repo ships a `.devcontainer/` that installs every pinned tool. Open the
+folder in VS Code with the Dev Containers extension, or run:
+
+```sh
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . bash
+```
+
+Everything below then works inside the container with no host setup.
+
+### Option B: Local bootstrap (macOS/Linux)
+
+Run the bootstrap script, which installs JDK 17, `pmtiles`, and `ffmpeg`,
+and exports `JAVA_HOME` for the current shell:
+
+```sh
+bash scripts/bootstrap.sh
+```
+
+If you prefer to manage versions yourself, install the pinned versions above
+and set `JAVA_HOME` manually:
+
+```sh
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS
+# or: export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk  # Linux
+```
+
+### Verify the environment
+
+Run these checks before building; they catch the JDK mismatch that otherwise
+surfaces as `25.0.4.1`:
+
+```sh
+java -version        # must report 17.x
+pmtiles --version
+echo $JAVA_HOME
+```
 
 ## Build and run
 
@@ -129,3 +186,5 @@ the 150-line limit; it introduces no additional named abstraction.
   Android instrumentation tests were built, not successfully executed here.
 - The repository contains source and asset-preparation scripts; the prepared
   model and demo map remain ignored by Git and are included in the delivered ZIP/APK.
+
+---

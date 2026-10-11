@@ -1,3 +1,6 @@
+[![Build MudMap APK](https://github.com/johnny603/MudMap/actions/workflows/build.yml/badge.svg)](https://github.com/johnny603/MudMap/actions/workflows/build.yml)
+
+
 # MudMap
 
 MudMap is a single-phone, offline "walk, talk, map" slice. Press Record to

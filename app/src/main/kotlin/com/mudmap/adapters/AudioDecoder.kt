@@ -1,5 +1,5 @@
 // Decodes .m4a to 16 kHz mono float PCM for whisper.cpp. Not a pattern.
-package com.mudmap.slice1.adapters
+package com.mudmap.adapters
 
 import android.media.AudioFormat
 import android.media.MediaCodec

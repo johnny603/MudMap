@@ -1,6 +1,6 @@
 package com.mudmap
 
-import com.mudmap.slice1.storage.TrailEntry
+import com.mudmap.storage.TrailEntry
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
